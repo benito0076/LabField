@@ -31,15 +31,24 @@ jobs:
       - name: Build Web Assets
         run: npm run build
 
-      - name: Sync Capacitor
-        run: npx cap sync
-
-      - name: Build Android APK
+      # PASO UNIFICADO Y ROBUSTO
+      - name: Prepare and Build Android
         run: |
+          # 1. Verificación de seguridad: ¿Existe la carpeta android?
+          if [ ! -d "android" ]; then
+            echo "⚠️ La carpeta 'android' no fue detectada en el repositorio. Generándola automáticamente..."
+            npx cap add android
+          else
+            echo "✅ Carpeta 'android' detectada. Sincronizando cambios..."
+            npx cap sync
+          fi
+
+          # 2. Entrar a la carpeta y corregir errores de Windows (CRLF y Permisos)
           cd android
-          # CORRECCIÓN: Soluciona error de saltos de línea (CRLF) al subir desde Windows
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
+          
+          # 3. Compilar el APK
           ./gradlew assembleDebug
 
       # CORRECCIÓN: Se actualizó a v4 para evitar el error de deprecación
