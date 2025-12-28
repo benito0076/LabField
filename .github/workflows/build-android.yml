@@ -31,27 +31,32 @@ jobs:
       - name: Build Web Assets
         run: npm run build
 
-      # PASO UNIFICADO Y ROBUSTO
+      # PASO UNIFICADO, ROBUSTO Y AUTOSUFICIENTE
       - name: Prepare and Build Android
         run: |
-          # 1. Verificación de seguridad: ¿Existe la carpeta android?
+          # 1. SALVAVIDAS: Crear capacitor.config.json si no existe (Causa común de error "exit code 1")
+          if [ ! -f "capacitor.config.json" ]; then
+            echo "⚠️ No se encontró capacitor.config.json en el repo. Creándolo al vuelo..."
+            echo '{"appId":"com.labfield.app","appName":"LabField","webDir":"dist","server":{"androidScheme":"https"}}' > capacitor.config.json
+          fi
+
+          # 2. Verificar o crear carpeta Android
           if [ ! -d "android" ]; then
-            echo "⚠️ La carpeta 'android' no fue detectada en el repositorio. Generándola automáticamente..."
+            echo "⚠️ Carpeta 'android' no detectada. Generándola..."
             npx cap add android
           else
-            echo "✅ Carpeta 'android' detectada. Sincronizando cambios..."
+            echo "✅ Carpeta 'android' detectada. Sincronizando..."
             npx cap sync
           fi
 
-          # 2. Entrar a la carpeta y corregir errores de Windows (CRLF y Permisos)
+          # 3. Corregir permisos y formato de Windows (CRLF) para Gradlew
           cd android
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
           
-          # 3. Compilar el APK
+          # 4. Compilar
           ./gradlew assembleDebug
 
-      # CORRECCIÓN: Se actualizó a v4 para evitar el error de deprecación
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
