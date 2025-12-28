@@ -37,6 +37,8 @@ jobs:
       - name: Build Android APK
         run: |
           cd android
+          # CORRECCIÓN: Soluciona error de saltos de línea (CRLF) al subir desde Windows
+          sed -i 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew assembleDebug
 
